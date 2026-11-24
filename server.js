@@ -94,6 +94,35 @@ async function handleRequest(req, res) {
     return res.end();
   }
 
+  // 0. Root & Home Page (GET / and GET /index.html)
+  if ((pathname === '/' || pathname === '/index.html') && method === 'GET') {
+    const candidatePaths = [
+      path.join(PUBLIC_DIR, 'index.html'),
+      path.join(__dirname, 'index.html'),
+      path.join(__dirname, 'public', 'index.html')
+    ];
+    for (const p of candidatePaths) {
+      if (fs.existsSync(p)) {
+        try {
+          const html = fs.readFileSync(p, 'utf8');
+          res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'no-cache',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return res.end(html);
+        } catch (err) {
+          console.error('Error reading index.html:', err);
+        }
+      }
+    }
+  }
+
+  // Health check endpoint for cloud load balancers (Render, AWS, etc.)
+  if ((pathname === '/healthz' || pathname === '/health') && method === 'GET') {
+    return sendJson(res, 200, { status: 'healthy', uptime: process.uptime() });
+  }
+
   try {
     // -------------------------------------------------------------
     // REST API ROUTES
@@ -632,36 +661,73 @@ async function handleRequest(req, res) {
     // -------------------------------------------------------------
     // STATIC ASSETS SERVING (SPA)
     // -------------------------------------------------------------
-    let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
+    const cleanPath = pathname === '/' ? 'index.html' : pathname.replace(/^\/+/, '');
+    const candidateFilePaths = [
+      path.join(PUBLIC_DIR, cleanPath),
+      path.join(__dirname, cleanPath),
+      path.join(__dirname, 'public', cleanPath)
+    ];
 
-    // Normalize path to prevent directory traversal
-    if (!filePath.startsWith(PUBLIC_DIR)) {
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      return res.end('Access Denied');
+    for (const targetPath of candidateFilePaths) {
+      if (fs.existsSync(targetPath)) {
+        try {
+          const stats = fs.statSync(targetPath);
+          if (stats.isFile()) {
+            const ext = path.extname(targetPath).toLowerCase();
+            const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+            const content = fs.readFileSync(targetPath);
+            res.writeHead(200, {
+              'Content-Type': contentType,
+              'Access-Control-Allow-Origin': '*'
+            });
+            return res.end(content);
+          }
+        } catch (e) {
+          // Continue to next candidate
+        }
+      }
     }
 
-    fs.stat(filePath, (err, stats) => {
-      if (err || !stats.isFile()) {
-        // Fallback to index.html for SPA client-side routing
-        filePath = path.join(PUBLIC_DIR, 'index.html');
-      }
-
-      const ext = path.extname(filePath).toLowerCase();
-      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
-
-      fs.readFile(filePath, (readErr, content) => {
-        if (readErr) {
-          res.writeHead(500, { 'Content-Type': 'text/plain' });
-          return res.end('Server Error loading asset');
+    // SPA Fallback: for any other non-API GET request, return index.html
+    if (method === 'GET' && !pathname.startsWith('/api/')) {
+      const candidateIndex = [
+        path.join(PUBLIC_DIR, 'index.html'),
+        path.join(__dirname, 'index.html'),
+        path.join(__dirname, 'public', 'index.html')
+      ];
+      for (const p of candidateIndex) {
+        if (fs.existsSync(p)) {
+          const html = fs.readFileSync(p, 'utf8');
+          res.writeHead(200, {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Access-Control-Allow-Origin': '*'
+          });
+          return res.end(html);
         }
-        res.writeHead(200, { 'Content-Type': contentType });
-        res.end(content);
-      });
-    });
+      }
+    }
+
+    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+    return res.end('Not Found');
 
   } catch (apiError) {
     console.error('API Error:', apiError);
     return sendJson(res, 400, { error: apiError.message || 'Internal Server Error' });
+  }
+}
+
+// Auto-seed check on initialization
+try {
+  const countRow = db.prepare('SELECT COUNT(*) AS count FROM items').get();
+  if (!countRow || countRow.count === 0) {
+    console.log('Database empty on startup. Automatically seeding Section 5 initial state...');
+    seedDatabase();
+  }
+} catch (e) {
+  try {
+    seedDatabase();
+  } catch (err) {
+    console.error('Seed error:', err);
   }
 }
 
@@ -671,34 +737,41 @@ if (require.main === module) {
   const os = require('node:os');
   const getLocalIps = () => {
     const ips = [];
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          ips.push(iface.address);
+    try {
+      const interfaces = os.networkInterfaces();
+      for (const name of Object.keys(interfaces)) {
+        for (const iface of interfaces[name]) {
+          if (iface.family === 'IPv4' && !iface.internal) {
+            ips.push(iface.address);
+          }
         }
       }
-    }
+    } catch (e) {}
     return ips;
   };
   const ips = getLocalIps();
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n============================================================`);
-    console.log(`🚀 Annapoorna Order-to-Audit Server Running!`);
+    console.log(`🚀 Annapoorna Order-to-Audit Server Running on port ${PORT}!`);
+    console.log(`   ► Listening on:  0.0.0.0:${PORT}`);
     console.log(`   ► IPv4 Loopback: http://127.0.0.1:${PORT}`);
     ips.forEach(ip => console.log(`   ► Local Network: http://${ip}:${PORT}`));
     console.log(`   ► Localhost:     http://localhost:${PORT}`);
     console.log(`============================================================\n`);
   });
 
-  // Secondary port listener on 8080 for fallback
-  const secondaryPort = 8080;
-  const secondaryServer = http.createServer(handleRequest);
-  secondaryServer.listen(secondaryPort, '0.0.0.0', () => {
-    console.log(`   ► Secondary Port (8080): http://127.0.0.1:${secondaryPort}`);
-    ips.forEach(ip => console.log(`   ► Secondary Net (8080):  http://${ip}:${secondaryPort}`));
-  });
+  // Only bind secondary port for local development if PORT is default 3000 and not running in cloud
+  if (!process.env.RENDER && !process.env.PORT && PORT === 3000) {
+    const secondaryPort = 8080;
+    try {
+      const secondaryServer = http.createServer(handleRequest);
+      secondaryServer.listen(secondaryPort, '0.0.0.0', () => {
+        console.log(`   ► Local Fallback (8080): http://127.0.0.1:${secondaryPort}`);
+      });
+      secondaryServer.on('error', () => {});
+    } catch (e) {}
+  }
 }
 
 module.exports = { server, handleRequest, PORT };

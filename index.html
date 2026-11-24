@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annapoorna Traditional Foods • Order-to-Audit ERP</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0284c7">
+  <meta name="description" content="Order-to-Audit ERP for Small Food Manufacturer - Centre for Digital Infrastructure, NIT Tiruchirappalli">
+</head>
+<body>
+
+  <!-- TOP NAVBAR -->
+  <header class="navbar-top">
+    <div class="brand-section">
+      <div class="brand-logo">ATF</div>
+      <div class="brand-info">
+        <h1>Annapoorna Traditional Foods Pvt Ltd</h1>
+        <p>Order-to-Audit ERP • NIT Tiruchirappalli CDI Prototype • Tamil Nadu (State 33)</p>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <!-- ROLE SELECTOR PILLS -->
+      <nav class="role-nav" id="role-nav-container">
+        <button class="role-nav-btn active" data-role="admin">
+          <span>🖥️</span> <span>Factory Admin</span>
+        </button>
+        <button class="role-nav-btn" data-role="salesman">
+          <span>📱</span> <span>Field Salesman</span>
+        </button>
+        <button class="role-nav-btn" data-role="production">
+          <span>⚙️</span> <span>Production Floor</span>
+        </button>
+        <button class="role-nav-btn" data-role="accountant">
+          <span>📊</span> <span>Auditor & CA</span>
+        </button>
+        <button class="role-nav-btn" data-role="owner">
+          <span>👔</span> <span>Owner Dashboard</span>
+        </button>
+      </nav>
+
+      <!-- TAMIL LANGUAGE TOGGLE -->
+      <button class="btn-lang" id="btn-language-toggle">தமிழ் / EN</button>
+    </div>
+  </header>
+
+  <!-- BENCHMARK GUIDED WALKTHROUGH BAR -->
+  <aside class="benchmark-tour-bar">
+    <div class="tour-title">
+      <strong>🎯 Section 5 Benchmark Walkthrough:</strong>
+      <span id="benchmark-status-badge" class="status-pill pill-warning">Status: Pending Run</span>
+    </div>
+
+    <div class="tour-controls">
+      <button class="btn-tour-step" onclick="runBenchmarkStep(1)" title="Purchase 60kg Flour @ ₹45/kg">1. Purchase</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(2)" title="Production Run: 188 pkts, 6 damaged pouches, 9 cartons">2. Production Run</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(3)" title="Salesman A Order for Retailer A (150 pkts)">3. TN Order</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(4)" title="Admin Approves, Invoices (CGST+SGST) & Dispatches">4. Invoice & Dispatch</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(5)" title="Salesman B Order for Distributor B (120 pkts, shortage of 32)">5. KA Shortage</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(6)" title="Record payment of ₹4,000 from Retailer A">6. Payment</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(7)" title="Overheads & Costing (₹30.90 / pkt)">7. Costing</button>
+      <button class="btn-tour-step" onclick="runBenchmarkStep(8)" title="Audit & Month-end Reports">8. Reports</button>
+
+      <span style="color: #6366f1; margin: 0 4px;">|</span>
+      <button class="btn-tour-run-all" id="btn-run-full-benchmark">▶️ Run All Benchmark Steps</button>
+      <button class="btn-tour-reset" id="btn-reset-benchmark">🔄 Reset to Opening State</button>
+      <button class="btn-tour-reset" id="btn-view-audit-checklist">📋 Audit Checklist</button>
+    </div>
+  </aside>
+
+  <!-- MAIN DYNAMIC WORKSPACE VIEW -->
+  <main class="main-wrapper" id="main-view-container">
+    <!-- View loaded via app.js -->
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer-bar no-print">
+    <div>
+      <strong>Annapoorna Traditional Foods ERP</strong> • Centre for Digital Infrastructure, NIT Tiruchirappalli
+    </div>
+    <div style="display: flex; gap: 16px; align-items: center;">
+      <span>● System Mode: <strong>Zero External Dependencies</strong></span>
+      <span>● Database: <strong>Native SQLite ACID Ledger</strong></span>
+      <span>● Time: <span id="clock-display">Live</span></span>
+    </div>
+  </footer>
+
+  <!-- DYNAMIC MODAL BACKDROP -->
+  <div id="modal-backdrop" class="modal-backdrop" style="display: none;">
+    <div class="modal-dialog" id="modal-dialog-content">
+      <!-- Dynamic modal content -->
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
