@@ -1,0 +1,24 @@
+{
+  "name": "annapoorna-order-to-audit",
+  "version": "1.0.0",
+  "description": "Order-to-Audit System for a Small Food Manufacturer (Murukku, Tamil Nadu) - NIT Tiruchirappalli Internship Prototype",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "seed": "node seed.js",
+    "benchmark": "node benchmark.js",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "order-to-audit",
+    "erp",
+    "food-manufacturing",
+    "gst",
+    "bill-of-materials",
+    "stock-ledger",
+    "variance-analysis",
+    "nit-trichy"
+  ],
+  "author": "NIT Trichy CDI Candidate",
+  "license": "MIT"
+}
